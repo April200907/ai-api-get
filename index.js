@@ -5,12 +5,15 @@ const { OpenAI } = require('openai');
 const app = express();
 app.use(express.json());
 
-// TAMANG setup ng OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Pang-browser test
+app.get('/ai', (req, res) => {
+  res.send('AI API is working! Use POST to interact.');
 });
 
-app.post('/api/chat', async (req, res) => {
+// Real chat endpoint
+app.post('/ai', async (req, res) => {
   try {
     const userMessage = req.body.message;
 
