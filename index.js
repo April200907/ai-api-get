@@ -7,12 +7,6 @@ app.use(express.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Pang-browser test
-app.get('/ai', (req, res) => {
-  res.send('AI API is working! Use POST to interact.');
-});
-
-// Real chat endpoint
 app.post('/ai', async (req, res) => {
   try {
     const userMessage = req.body.message;
