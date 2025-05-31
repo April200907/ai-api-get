@@ -1,50 +1,43 @@
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const { OpenAI } = require("openai");
-require("dotenv").config();
+const express = require('express');
+const axios = require('axios');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors());
 app.use(bodyParser.json());
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY // Make sure this is set in Render Environment
+app.get('/', (req, res) => {
+  res.send('✅ LLaMA API is running! Send POST /ai with { prompt }');
 });
 
-// Home route (optional)
-app.get("/", (req, res) => {
-  res.send("✅ AI API is working! Use POST to interact.");
-});
-
-// AI route
-app.post("/ai", async (req, res) => {
-  const prompt = req.body.message;
-
-  if (!prompt) {
-    return res.status(400).json({ error: "Missing 'message' in request body." });
-  }
-
+app.post('/ai', async (req, res) => {
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    });
+    const prompt = req.body.prompt;
+    if (!prompt) return res.status(400).json({ error: 'Walang prompt.' });
 
-    const reply = completion.choices[0].message.content.trim();
-    res.json({ reply });
+    // HuggingFace LLaMA 2 7B chat model (walang API key needed para demo, pero may limit)
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf',
+      {
+        inputs: prompt,
+        parameters: { max_new_tokens: 100 },
+      }
+      // No headers needed here for free endpoint
+    );
 
+    const data = response.data;
+
+    // HuggingFace response usually nasa ganitong format:
+    const output = data?.generated_text || data?.[0]?.generated_text || 'Walang sagot.';
+
+    res.json({ response: output });
   } catch (err) {
-    console.error("❌ OpenAI Error:", err);
-    res.status(500).json({ error: "Something went wrong with OpenAI." });
+    console.error('Error:', err.response?.data || err.message);
+    res.status(500).json({ error: '❌ May error sa AI request.' });
   }
 });
 
-// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
