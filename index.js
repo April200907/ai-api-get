@@ -1,6 +1,7 @@
-import express from "express";
-import cors from "cors";
-import { GoogleGenerativeAI } from "@google/genai";
+const express = require("express");
+const cors = require("cors");
+const { GoogleGenerativeAI } = require("@google/genai");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
@@ -16,14 +17,13 @@ app.post("/api/gemini", async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = await response.text();
-    res.json({ success: true, reply: text });
+    res.json({ success: true, reply: await response.text() });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running on port 3000");
+  console.log("✅ Server running on port 3000");
 });
