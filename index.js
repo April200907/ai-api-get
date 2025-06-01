@@ -1,21 +1,29 @@
-require('dotenv').config();
-const express = require('express');
-const gemini = require('./ai/gemini');
+import express from "express";
+import cors from "cors";
+import { GoogleGenerativeAI } from "@google/genai";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
+app.use(cors());
 app.use(express.json());
 
-// Home route
-app.get('/', (req, res) => {
-  res.send('✅ Gemini AI API is running.');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+app.post("/api/gemini", async (req, res) => {
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Missing prompt." });
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = await response.text();
+    res.json({ success: true, reply: text });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-// Gemini route
-app.post('/api/gemini', gemini);
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server started at http://localhost:${PORT}`);
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running on port 3000");
 });
